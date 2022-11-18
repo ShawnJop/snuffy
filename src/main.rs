@@ -123,9 +123,9 @@ fn main() -> Result<(), anyhow::Error> {
         // attach the uprobes
         for uprobe in loader.uprobes_mut() {
             match uprobe.name().as_str() {
-                "getaddrinfo" | "getaddrinfo_ret" => {
-                    attach_uprobe!(uprobe, "getaddrinfo", "libc", opts)?;
-                }
+                // "getaddrinfo" | "getaddrinfo_ret" => {
+                //     attach_uprobe!(uprobe, "getaddrinfo", "libc", opts)?;
+                // }
                 "connect" => {
                     attach_uprobe!(uprobe, "connect", "libpthread", opts)?;
                 }

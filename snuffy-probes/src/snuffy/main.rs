@@ -46,52 +46,52 @@ struct SSLArgs {
     buf: usize,
 }
 
-#[uprobe]
-fn getaddrinfo(regs: Registers) {
-    if !is_target_command() {
-        return;
-    }
+// #[uprobe]
+// fn getaddrinfo(regs: Registers) {
+//     if !is_target_command() {
+//         return;
+//     }
 
-    let tid = bpf_get_current_pid_tgid();
-    unsafe { dns_hosts.set(&tid, &(regs.parm1(), regs.parm4())) };
-}
+//     let tid = bpf_get_current_pid_tgid();
+//     unsafe { dns_hosts.set(&tid, &(regs.parm1(), regs.parm4())) };
+// }
 
-#[uretprobe]
-fn getaddrinfo_ret(regs: Registers) {
-    let _ = do_getaddrinfo_ret(regs);
-}
+// #[uretprobe]
+// fn getaddrinfo_ret(regs: Registers) {
+//     let _ = do_getaddrinfo_ret(regs);
+// }
 
-fn do_getaddrinfo_ret(regs: Registers) -> Option<()> {
-    let tid = bpf_get_current_pid_tgid();
-    let (node, ret_addr) = unsafe { *dns_hosts.get(&tid)? };
+// fn do_getaddrinfo_ret(regs: Registers) -> Option<()> {
+//     let tid = bpf_get_current_pid_tgid();
+//     let (node, ret_addr) = unsafe { *dns_hosts.get(&tid)? };
 
-    let info = unsafe { &*bpf_probe_read(ret_addr as *const *const addrinfo).ok()? };
-    if info.ai_family()? as u32 != AF_INET {
-        return None;
-    }
-    let addr = unsafe { &*(info.ai_addr()? as *const sockaddr_in) };
+//     let info = unsafe { &*bpf_probe_read(ret_addr as *const *const addrinfo).ok()? };
+//     if info.ai_family()? as u32 != AF_INET {
+//         return None;
+//     }
+//     let addr = unsafe { &*(info.ai_addr()? as *const sockaddr_in) };
 
-    let mut dns = DNS {
-        pid: current_pid(),
-        comm: current_comm(),
-        addr: addr.sin_addr()?.s_addr()? as u64,
-        host: [0; HOST_LEN],
-    };
+//     let mut dns = DNS {
+//         pid: current_pid(),
+//         comm: current_comm(),
+//         addr: addr.sin_addr()?.s_addr()? as u64,
+//         host: [0; HOST_LEN],
+//     };
 
-    unsafe {
-        bpf_probe_read_str(
-            dns.host.as_mut_ptr() as *mut _,
-            HOST_LEN as i32,
-            node as *const c_void,
-        )
-    };
+//     unsafe {
+//         bpf_probe_read_str(
+//             dns.host.as_mut_ptr() as *mut _,
+//             HOST_LEN as i32,
+//             node as *const c_void,
+//         )
+//     };
 
-    unsafe {
-        dns_events.insert(regs.ctx, &dns);
-    }
+//     unsafe {
+//         dns_events.insert(regs.ctx, &dns);
+//     }
 
-    None
-}
+//     None
+// }
 
 #[uprobe]
 fn connect(regs: Registers) {
